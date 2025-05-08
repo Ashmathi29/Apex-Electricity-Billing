@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apex Electricity Billing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center font-sans">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full space-y-6">
+    <h1 class="text-2xl font-bold text-center text-indigo-600">Apex Online Electricity Billing</h1>
+
+    <!-- Input Form -->
+    <div id="form-section" class="space-y-4">
+      <input id="ebId" type="text" placeholder="EB ID" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-indigo-300"/>
+      <input id="name" type="text" placeholder="Full Name" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-indigo-300"/>
+      <input id="number" type="text" placeholder="Phone Number" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-indigo-300"/>
+      <input id="age" type="number" placeholder="Age" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-indigo-300"/>
+      <button onclick="saveAndShowBill()" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition">Submit</button>
+    </div>
+
+    <!-- Bill Display -->
+    <div id="bill-section" class="hidden space-y-4">
+      <h2 class="text-lg font-bold text-center text-green-700">Bill Details</h2>
+      <p><strong>Name:</strong> <span id="display-name"></span></p>
+      <p><strong>EB ID:</strong> <span id="display-ebid"></span></p>
+      <p><strong>Amount Due:</strong> <span id="display-amount" class="text-red-600 font-bold"></span></p>
+      <p><strong>Select Payment Method:</strong></p>
+      <div class="flex flex-col gap-2">
+        <button onclick="showPaymentProof('UPI')" class="bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600">Pay via UPI</button>
+        <button onclick="showPaymentProof('Credit Card')" class="bg-purple-500 text-white py-2 rounded-xl hover:bg-purple-600">Pay via Credit Card</button>
+        <button onclick="showPaymentProof('Net Banking')" class="bg-teal-500 text-white py-2 rounded-xl hover:bg-teal-600">Pay via Net Banking</button>
+      </div>
+    </div>
+
+    <!-- Payment Proof -->
+    <div id="payment-proof" class="hidden text-center space-y-4">
+      <div id="proof-details" class="bg-gray-100 p-4 rounded-xl shadow-md text-left"></div>
+      <button onclick="downloadReceipt()" id="download-btn" class="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700">Download Receipt</button>
+      <button onclick="location.reload()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700">Back to Home</button>
+    </div>
+  </div>
+
+  <script>
+    function saveAndShowBill() {
+      const ebId = document.getElementById('ebId').value;
+      const name = document.getElementById('name').value;
+      const number = document.getElementById('number').value;
+      const age = document.getElementById('age').value;
+
+      if (!ebId || !name || !number || !age) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      const billAmount = Math.floor(Math.random() * 500) + 100;
+
+      const billData = {
+        ebId,
+        name,
+        number,
+        age,
+        amount: billAmount,
+        date: new Date().toLocaleDateString()
+      };
+
+      localStorage.setItem('apexBillData', JSON.stringify(billData));
+      displayBill(billData);
+    }
+
+    function displayBill(data) {
+      document.getElementById('form-section').classList.add('hidden');
+      document.getElementById('bill-section').classList.remove('hidden');
+
+      document.getElementById('display-name').textContent = data.name;
+      document.getElementById('display-ebid').textContent = data.ebId;
+      document.getElementById('display-amount').textContent = `₹${data.amount}`;
+    }
+
+    function showPaymentProof(method) {
+      const data = JSON.parse(localStorage.getItem('apexBillData'));
+      const paymentId = prompt(`Enter your ${method} Transaction ID:`);
+
+      if (!paymentId || paymentId.trim() === "") {
+        alert("Payment ID is required to proceed.");
+        return;
+      }
+
+      document.getElementById('bill-section').classList.add('hidden');
+      document.getElementById('payment-proof').classList.remove('hidden');
+
+      const receiptHTML = `
+        <div style="font-family: Arial; padding: 20px; max-width: 500px; margin: auto;">
+          <h2 style="color: green; text-align: center;">Apex Electricity Billing Receipt</h2>
+          <hr/>
+          <p><strong>Name:</strong> ${data.name}</p>
+          <p><strong>EB ID:</strong> ${data.ebId}</p>
+          <p><strong>Amount Paid:</strong> ₹${data.amount}</p>
+          <p><strong>Payment Method:</strong> ${method}</p>
+          <p><strong>Transaction ID:</strong> ${paymentId}</p>
+          <p><strong>Date:</strong> ${data.date}</p>
+          <p><strong>Payment:</strong> ${data.completed/pending}
+          <hr/>
+          <p style="text-align:center;">Thank you for your payment!</p>
+        </div>
+      `;
+
+      document.getElementById('proof-details').innerHTML = receiptHTML;
+      localStorage.setItem('receiptHTML', receiptHTML);
+
+      // Automatically open receipt in new window
+      const newWin = window.open('', '_blank');
+      newWin.document.write(`<html><head><title>Payment Receipt</title></head><body>${receiptHTML}</body></html>`);
+      newWin.document.close();
+      newWin.print();
+    }
+
+    function downloadReceipt() {
+      const receiptHTML = localStorage.getItem('receiptHTML');
+      const newWin = window.open('', '_blank');
+      newWin.document.write(`<html><head><title>Payment Receipt</title></head><body>${receiptHTML}</body></html>`);
+      newWin.document.close();
+      newWin.print();
+    }
+  </script>
+</body>
+</html>
